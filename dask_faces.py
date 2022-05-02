@@ -437,20 +437,16 @@
 # print("Data written to zarr! Hooray!")
 
 ##### PARTICULAR MINER VERSION #####
-from sched import scheduler
 import numpy as np
 from pathlib import Path
 from skimage.feature import hog
 from numcodecs.blosc import Blosc
-import cv2
+# import cv2
 import pims
 import dask.config
-from pims import FramesSequence
 import dask.array as da
 import dask_image.imread
-from dask.distributed import Client
 import time
-import sys
 import warnings
 
 
@@ -472,12 +468,12 @@ def as_grey(frame):
         return 0.2125 * red + 0.7154 * green + 0.0721 * blue
 
 
-def crop_frame(video_object):
+# def crop_frame(video_object):
 
-    coords = cv2.selectROI("ROI Selection", video_object)
-    cv2.destroyAllWindows()
+#     coords = cv2.selectROI("ROI Selection", video_object)
+#     cv2.destroyAllWindows()
 
-    return coords
+#     return coords
 
 def make_hogs(frames, coords, kwargs):
 
@@ -523,13 +519,13 @@ def make_hogs(frames, coords, kwargs):
 
     # Until I edit the hog code, perform the hog calculation upon each
     # frame in a loop and append them to their respective np arrays
-    start = time.perf_counter()
+    # start = time.perf_counter()
     for index, image in enumerate(new_frames):
         hog_descriptor, hog_image = hog(image, **kwargs)
         hog_descriptors[index, ...] = hog_descriptor
         hog_images[index, ...] = hog_image
-    end = time.perf_counter() - start
-    print(f"MADE HOGS IN {end}")
+    # end = time.perf_counter() - start
+    # print(f"MADE HOGS IN {end}")
     
     return hog_descriptors, hog_images
 
@@ -554,9 +550,7 @@ warnings.filterwarnings('ignore', '`nframes` does not nicely divide')
 
 program_start = time.perf_counter()
 
-# client = Client(threads_per_worker=1)
-
-video_path = "/scratch/snlkt_facial_expression/test_vid.mp4"
+video_path = "movies/test_vid.mp4"
 
 pims.ImageIOReader.class_priority = 100  # we set this very high in order to force dask's imread() to use this reader [via pims.open()]
 
@@ -631,17 +625,11 @@ hog_descriptors = hog_descriptors.squeeze(-1)  # here's where we drop the last d
 
 compressor = Blosc(cname='zstd', clevel=1)
 
-# da.to_zarr(hog_images, "/scratch/snlkt_facial_expression/hog_images/data.zarr", compressor=compressor)
-
 with dask.config.set(scheduler='processes'):
-    da.to_zarr(hog_images, "/scratch/snlkt_facial_expression/hog_images/", compressor=compressor)
-
-# with dask.config.set(scheduler="processes"):
-#     da.to_zarr(hog_descriptors, "/scratch/snlkt/_facial_expression/hog_descriptors/data.zarr", compressor=compressor)
+    da.to_zarr(hog_images, "/scratch/snlkt_facial_expression/h.zarr")
+    da.to_zarr(hog_descriptors, "/scratch/snlkt_facial_expression/d.zarr")
 
 print("Data written to zarr! Hooray!")
-
-# client.shutdown()
 
 program_end = time.perf_counter() - program_start
 
