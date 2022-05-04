@@ -1,7 +1,9 @@
 # Adapted repository for mouse facial expression analysis from Dolensek et al 2020
 # Written with the gracious help of John Kirkham, Josh Moore, and Martin Durant (Dask/Zarr Developers)
 # ParticularMiner, Jeremy Delahanty May 2022
-
+import sys
+import matplotlib.pyplot as plt
+import zarr
 import numpy as np
 import time
 import warnings
@@ -158,7 +160,7 @@ if __name__ == "__main__":
 
     program_start = time.perf_counter()
     
-    video_path = "movies/20211216_CSE014_plane1_-333.325.mp4"
+    video_path = "movies/test_vid.mp4"
 
     pims.ImageIOReader.class_priority = 100  # we set this very high in order to force dask's imread() to use this reader [via pims.open()]
 
@@ -189,9 +191,19 @@ if __name__ == "__main__":
     # Descriptors: 2D histogram, several descriptors per chunk
     meta = np.array([[[]]])
 
-    # Provide the datatype of the grayscaled images for writing dask arrays
-    # later.
-    dtype = grey_frames.dtype
+    # first determine the output hog shapes from the first grey-scaled image so that
+    # we can use them for all other outputs: 
+    first_hog_descr, first_hog_image = make_hogs(
+        grey_frames[:1, ...].compute(),
+        coords,
+        kwargs
+    )
+
+    # Provide the datatype of the hog images for writing dask arrays
+    # later. If you use the datatype of the grey_frames, it will send all your
+    # data to zero! Be sure to use the datatype that the function you're operating
+    # with gives you unless it's safe to change it later!
+    dtype = first_hog_image.dtype
 
     # Map the chunks of the grey_frames results onto the make_hogs() function.
     # Perform cropping, HOG calculations, and HOG image generation.
@@ -201,14 +213,6 @@ if __name__ == "__main__":
         dtype=dtype,
         meta=meta,
         kwargs=kwargs,
-    )
-
-    # first determine the output hog shapes from the first grey-scaled image so that
-    # we can use them for all other images: 
-    first_hog_descr, first_hog_image = make_hogs(
-        grey_frames[:1, ...].compute(),
-        coords,
-        kwargs
     )
 
     # Get the resulting images out of the returned tuple from my_hogs() chunks. Save that
@@ -254,8 +258,8 @@ if __name__ == "__main__":
     # Tell dask to perform computations via processes and not threads. Using threads yields severe
     # performance decreases! I don't know specifically why it struggles so much...
     with dask.config.set(scheduler='processes'):
-        da.to_zarr(hog_images, "/scratch/snlkt_facial_expression/hogs/data.zarr", component="images")
-        da.to_zarr(hog_descriptors, "/scratch/snlkt_facial_expression/hogs/data.zarr", component="descriptors")
+        da.to_zarr(hog_images, "/scratch/snlkt_facial_expression/test/data.zarr", component="images")
+        da.to_zarr(hog_descriptors, "/scratch/snlkt_facial_expression/test/data.zarr", component="descriptors")
 
     print("Data written to zarr! Hooray!")
 
