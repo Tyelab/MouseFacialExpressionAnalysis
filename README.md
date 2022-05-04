@@ -27,5 +27,5 @@ read the video into chunks which will then be iterated upon using the HOG functi
 
 These file reads can happen very quickly sequentially and the HOG computations and writing to zarr all happen in parallel. This is the ideal case for this repo.
 
-As of 5/2/22, there's an error with writing Zarrs to disk in parallel on the Linux machines here on Salk's cluster. See [here](https://github.com/orgs/zarr-developers/discussions/47).
-It may be something beyond my capabilities to solve right now, but I am bugging some Dask/PIMS/Dask-Image developers in the hope that they take a look and help me out here...
+Performing HOG calculations via Dask and writing data to Zarr is now complete!
+On a machine with a 64 Thread Xeon processor with 252GB RAM, the code `dask_faces.py` ran to completion in just over 8 minutes!
