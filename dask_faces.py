@@ -1,8 +1,6 @@
 # Adapted repository for mouse facial expression analysis from Dolensek et al 2020
 # Written with the gracious help of John Kirkham, Josh Moore, and Martin Durant (Dask/Zarr Developers)
 # ParticularMiner, Jeremy Delahanty May 2022
-import sys
-import matplotlib.pyplot as plt
 import zarr
 import numpy as np
 import time
@@ -245,7 +243,7 @@ if __name__ == "__main__":
         normalize_hog_desc_dims,
         new_axis=new_axes,
         chunks=descr_array_chunks,
-        dtype=dtype,
+        dtype=first_hog_descr.dtype,
         meta=meta,
     )
 
