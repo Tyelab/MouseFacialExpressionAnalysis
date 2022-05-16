@@ -1,16 +1,12 @@
 # Adapted repository for mouse facial expression analysis from Dolensek et al 2020
 # Written with the gracious help of John Kirkham, Josh Moore, and Martin Durant (Dask/Zarr Developers)
 # ParticularMiner, Jeremy Delahanty May 2022
-<<<<<<< HEAD
 
 import os
 from dask import config
 from dask.system import CPU_COUNT
 from dask.multiprocessing import get_context
 from concurrent.futures import ProcessPoolExecutor
-import matplotlib.pyplot as plt
-=======
->>>>>>> 8e08ae9389a046a18734860d8a5b4497b054ca01
 import zarr
 import numpy as np
 import time
