@@ -1,7 +1,12 @@
 # Adapted repository for mouse facial expression analysis from Dolensek et al 2020
 # Written with the gracious help of John Kirkham, Josh Moore, and Martin Durant (Dask/Zarr Developers)
 # ParticularMiner, Jeremy Delahanty May 2022
-import sys
+
+import os
+from dask import config
+from dask.system import CPU_COUNT
+from dask.multiprocessing import get_context
+from concurrent.futures import ProcessPoolExecutor
 import matplotlib.pyplot as plt
 import zarr
 import numpy as np
@@ -47,6 +52,41 @@ import dask_image.imread
 #     @property
 #     def pixel_type(self):
 #         return self._reader.pixel_type
+
+# Since we'll be using the multi-process-scheduler, and we want
+# every process to use ImageIOReader to read the video file, we
+# would then need to increase the priority of ImageIOReader for
+# every process that is created during computation:
+def initialize_worker_process():
+    """
+    Initialize a worker process before running any tasks in it.
+    """
+    # If Numpy is already imported, presumably its random state was
+    # inherited from the parent => re-seed it.
+    import sys
+    
+    np = sys.modules.get("numpy")
+    if np is not None:
+        np.random.seed()
+    
+    # We increase the priority of ImageIOReader in order to force dask's 
+    # imread() to use this reader [via pims.open()]
+    pims.ImageIOReader.class_priority = 100
+
+def get_pool_with_reader_priority_set(num_workers=None):
+    """
+    Create a process pool.
+    """
+    
+    num_workers = num_workers or config.get("num_workers", None) or CPU_COUNT
+    if os.environ.get("PYTHONHASHSEED") in (None, "0"):
+        # This number is arbitrary; it was chosen to commemorate
+        # https://github.com/dask/dask/issues/6640.
+        os.environ["PYTHONHASHSEED"] = "6640"
+    context = get_context()
+    return ProcessPoolExecutor(
+        num_workers, mp_context=context, initializer=initialize_worker_process
+    )
 
 def as_grey(frame):
     """Convert a 2D image or array of 2D images to greyscale.
@@ -160,12 +200,12 @@ if __name__ == "__main__":
 
     program_start = time.perf_counter()
     
-    video_path = "movies/test_vid.mp4"
+    video_path = "/snlkt/lvhome/jdelahanty/facial_expression_demo_data/20211105_CSE020_plane1_-587.325.mp4"
 
     pims.ImageIOReader.class_priority = 100  # we set this very high in order to force dask's imread() to use this reader [via pims.open()]
 
     # These coords are determined beforehand, should later be loaded from disk or have fiducial cropping performed so everything is the same
-    coords = (496, 174, 992, 508)
+    coords = (53, 22, 916, 475)
 
     # Use dask_image's reader to read your frames via PIMS, change nframes according to
     # your chunksize, which will likely be determined by your machine's available RAM mostly...
@@ -257,9 +297,9 @@ if __name__ == "__main__":
 
     # Tell dask to perform computations via processes and not threads. Using threads yields severe
     # performance decreases! I don't know specifically why it struggles so much...
-    with dask.config.set(scheduler='processes'):
-        da.to_zarr(hog_images, "/scratch/snlkt_facial_expression/test/data.zarr", component="images")
-        da.to_zarr(hog_descriptors, "/scratch/snlkt_facial_expression/test/data.zarr", component="descriptors")
+    with dask.config.set(scheduler='processes', pool=get_pool_with_reader_priority_set()):
+        da.to_zarr(hog_images, "/scratch/snlkt_facial_expression/CSE020/data.zarr", component="images")
+        da.to_zarr(hog_descriptors, "/scratch/snlkt_facial_expression/CSE020/data.zarr", component="descriptors")
 
     print("Data written to zarr! Hooray!")
 
