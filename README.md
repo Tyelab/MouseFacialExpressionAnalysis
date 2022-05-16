@@ -4,7 +4,7 @@ Extracting emotions from facial expressions in mice
 
 ## Notes from the Tye Lab
 
-Updating the README so it includes notes from Jeremy Delahanty, Research Technician in the Tye Lab, for expanding the capabilities of this repository.
+Updating the README so it includes notes from Jeremy Delahanty, Research Technician in the Tye Lab, for expanding the capabilities of this repository. Graduate student Deryn LeDuke is also working on enhancing the repository as well.
 
 ### Purpose
 This repository is meant to expand upon the original work of Nate Dolensek and the Gogolla Lab by incorporating Dask for performing HOG analyses
