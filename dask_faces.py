@@ -297,8 +297,8 @@ if __name__ == "__main__":
     # Tell dask to perform computations via processes and not threads. Using threads yields severe
     # performance decreases! I don't know specifically why it struggles so much...
     with dask.config.set(scheduler='processes', pool=get_pool_with_reader_priority_set()):
-        da.to_zarr(hog_images, "/scratch/snlkt_facial_expression/CSE020/data.zarr", component="images")
-        da.to_zarr(hog_descriptors, "/scratch/snlkt_facial_expression/CSE020/data.zarr", component="descriptors")
+        da.to_zarr(hog_images, "/scratch/snlkt_facial_expression/CSE020/data.zarr", component="images", compressor=compressor)
+        da.to_zarr(hog_descriptors, "/scratch/snlkt_facial_expression/CSE020/data.zarr", component="descriptors", compressor=compressor)
 
     print("Data written to zarr! Hooray!")
 
